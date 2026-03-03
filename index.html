@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mini Soccer Game</title>
+<style>
+    body {
+        margin: 0;
+        overflow: hidden;
+        background: linear-gradient(#4ec0ff, #87e0ff);
+        font-family: Arial, sans-serif;
+        text-align: center;
+    }
+
+    canvas {
+        display: block;
+        margin: auto;
+        background: #6ecf68;
+    }
+
+    #playAgain {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        padding: 15px 30px;
+        font-size: 20px;
+        border: none;
+        border-radius: 10px;
+        background: orange;
+        color: white;
+        display: none;
+    }
+</style>
+</head>
+<body>
+
+<canvas id="gameCanvas"></canvas>
+<button id="playAgain">Play Again</button>
+
+<script>
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+let ball = {
+    x: canvas.width / 2,
+    y: canvas.height - 80,
+    radius: 20,
+    speedY: -10,
+    moving: false
+};
+
+let goal = {
+    width: 150,
+    height: 20,
+    x: 0,
+    y: 80,
+    speed: 4,
+    direction: 1
+};
+
+let fireworks = [];
+let scored = false;
+
+function drawBall() {
+    ctx.beginPath();
+    ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+    ctx.fillStyle = "white";
+    ctx.fill();
+    ctx.stroke();
+}
+
+function drawGoal() {
+    ctx.fillStyle = "red";
+    ctx.fillRect(goal.x, goal.y, goal.width, goal.height);
+}
+
+function moveGoal() {
+    goal.x += goal.speed * goal.direction;
+    if (goal.x <= 0 || goal.x + goal.width >= canvas.width) {
+        goal.direction *= -1;
+    }
+}
+
+function updateBall() {
+    if (ball.moving) {
+        ball.y += ball.speedY;
+
+        if (ball.y <= goal.y + goal.height &&
+            ball.x >= goal.x &&
+            ball.x <= goal.x + goal.width) {
+            scored = true;
+            createFireworks();
+            document.getElementById("playAgain").style.display = "block";
+        }
+
+        if (ball.y < 0) {
+            resetBall();
+        }
+    }
+}
+
+function resetBall() {
+    ball.y = canvas.height - 80;
+    ball.moving = false;
+}
+
+function createFireworks() {
+    for (let i = 0; i < 100; i++) {
+        fireworks.push({
+            x: canvas.width / 2,
+            y: canvas.height / 2,
+            dx: (Math.random() - 0.5) * 10,
+            dy: (Math.random() - 0.5) * 10,
+            life: 50
+        });
+    }
+}
+
+function drawFireworks() {
+    fireworks.forEach((f, index) => {
+        ctx.fillStyle = "yellow";
+        ctx.fillRect(f.x, f.y, 4, 4);
+        f.x += f.dx;
+        f.y += f.dy;
+        f.life--;
+        if (f.life <= 0) fireworks.splice(index, 1);
+    });
+}
+
+function gameLoop() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    if (!scored) moveGoal();
+    drawGoal();
+    drawBall();
+    updateBall();
+    drawFireworks();
+
+    requestAnimationFrame(gameLoop);
+}
+
+canvas.addEventListener("click", shoot);
+canvas.addEventListener("touchstart", shoot);
+
+function shoot(e) {
+    if (!ball.moving && !scored) {
+        ball.moving = true;
+    }
+}
+
+document.getElementById("playAgain").addEventListener("click", () => {
+    scored = false;
+    fireworks = [];
+    resetBall();
+    document.getElementById("playAgain").style.display = "none";
+});
+
+gameLoop();
+</script>
+
+</body>
+</html>
